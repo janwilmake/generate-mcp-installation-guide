@@ -1,6 +1,6 @@
 const { generateMCPConfig } = require("./index");
 
-function generateHTML(mcpUrl, serverName, configs) {
+function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
   const apexDomain = new URL(mcpUrl).hostname
     .split(".")
     .reverse()
@@ -8,12 +8,41 @@ function generateHTML(mcpUrl, serverName, configs) {
     .reverse()
     .join(".");
 
+  // Filter configs if a specific client is selected
+  const displayConfigs = selectedClient
+    ? configs.filter(
+        (config) => config.client.toLowerCase() === selectedClient.toLowerCase()
+      )
+    : configs;
+
+  const pageTitle = selectedClient
+    ? `Install ${serverName} for ${selectedClient}`
+    : `Install ${serverName}`;
+
+  const pageDescription = selectedClient
+    ? `Install ${serverName} MCP server for ${selectedClient}`
+    : `Connect ${serverName} MCP server to any client`;
+
+  const clientIcon = selectedClient
+    ? displayConfigs[0]?.iconUrl
+    : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=64`;
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install This MCP</title>
+    <title>${pageTitle}</title>
+    <meta name="description" content="${pageDescription}">
+    <meta property="og:title" content="${pageTitle}">
+    <meta property="og:description" content="${pageDescription}">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="${clientIcon}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="${pageTitle}">
+    <meta name="twitter:description" content="${pageDescription}">
+    <meta name="twitter:image" content="${clientIcon}">
+    <link rel="icon" type="image/png" href="${clientIcon}">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -39,17 +68,46 @@ function generateHTML(mcpUrl, serverName, configs) {
     </script>
 </head>
 <body class="bg-white font-sans">
+    <!-- GitHub Star Button -->
+    <div class="fixed top-4 right-4 z-50">
+        <iframe src="https://ghbtns.com/github-btn.html?user=janwilmake&repo=install-this-mcp&type=star&count=true&size=large" 
+                frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+    </div>
+
     <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Header -->
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-black mb-2">Install This MCP</h1>
-            <p class="text-apple-gray-600 text-lg">Connect your MCP server to any client</p>
+            <h1 class="text-4xl font-bold text-black mb-2">${pageTitle}</h1>
+            <p class="text-apple-gray-600 text-lg">${pageDescription}</p>
+            
+            ${
+              selectedClient
+                ? `
+            <!-- Back to All Clients Button -->
+            <div class="mt-4">
+                <a href="/${encodeURIComponent(
+                  serverName
+                )}?url=${encodeURIComponent(mcpUrl)}" 
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-apple-gray-100 text-apple-gray-700 rounded-lg hover:bg-apple-gray-200 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    View All Clients
+                </a>
+            </div>
+            `
+                : ""
+            }
             
             <!-- Server Info -->
             <div class="bg-apple-gray-50 rounded-xl p-6 mt-8 border border-apple-gray-200">
                 <div class="flex items-center justify-center gap-4 mb-4">
-                    <img src="https://www.google.com/s2/favicons?domain=${apexDomain}&sz=64" 
-                         alt="${serverName}" 
+                    <img src="${
+                      selectedClient
+                        ? displayConfigs[0]?.iconUrl
+                        : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=64`
+                    }" 
+                         alt="${selectedClient || serverName}" 
                          class="w-16 h-16 rounded-xl border border-apple-gray-200"
                          onerror="this.style.display='none'">
                     <div>
@@ -60,6 +118,9 @@ function generateHTML(mcpUrl, serverName, configs) {
             </div>
         </div>
 
+        ${
+          !selectedClient
+            ? `
         <!-- Quick Install Links -->
         <div class="mb-12">
             <h3 class="text-xl font-semibold text-black mb-4">Quick Install</h3>
@@ -78,22 +139,69 @@ function generateHTML(mcpUrl, serverName, configs) {
                   .join("")}
             </div>
         </div>
+        `
+            : ""
+        }
+
+        ${
+          selectedClient && displayConfigs[0]?.deepLink
+            ? `
+        <!-- Quick Install for Selected Client -->
+        <div class="mb-8">
+            <a href="${displayConfigs[0].deepLink}" 
+               class="inline-flex items-center gap-3 px-6 py-3 bg-black text-white rounded-xl hover:bg-apple-gray-800 transition-colors text-lg font-medium">
+                <img src="${displayConfigs[0].iconUrl}" alt="${displayConfigs[0].client}" class="w-8 h-8 rounded">
+                Quick Install in ${displayConfigs[0].client}
+            </a>
+        </div>
+        `
+            : ""
+        }
 
         <!-- Manual Setup -->
         <div class="space-y-8">
-            <h3 class="text-xl font-semibold text-black mb-6">Manual Setup</h3>
+            <h3 class="text-xl font-semibold text-black mb-6">${
+              selectedClient ? `Install for ${selectedClient}` : "Manual Setup"
+            }</h3>
             
-            ${configs
+            ${displayConfigs
               .map(
                 (config, index) => `
                 <div class="border border-apple-gray-200 rounded-xl p-6">
-                    <div class="flex items-center gap-3 mb-4">
-                        <img src="${config.iconUrl}" alt="${
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <img src="${config.iconUrl}" alt="${
                   config.client
                 }" class="w-8 h-8 rounded">
-                        <h4 class="text-lg font-semibold text-black">${
-                          config.client
-                        }</h4>
+                            <h4 class="text-lg font-semibold text-black">${
+                              config.client
+                            }</h4>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${
+                              config.deepLink
+                                ? `
+                            <a href="${config.deepLink}"
+                               class="px-3 py-1.5 bg-black text-white text-sm rounded-lg hover:bg-apple-gray-800 transition-colors">
+                                Quick Install
+                            </a>
+                            `
+                                : ""
+                            }
+                            ${
+                              !selectedClient
+                                ? `
+                            <button onclick="navigateToClient('${config.client}')"
+                                    class="p-2 text-apple-gray-400 hover:text-black transition-colors"
+                                    title="View ${config.client} only">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                </svg>
+                            </button>
+                            `
+                                : ""
+                            }
+                        </div>
                     </div>
                     
                     ${
@@ -162,6 +270,14 @@ function generateHTML(mcpUrl, serverName, configs) {
                 console.error('Could not copy text: ', err);
             });
         }
+        
+        function navigateToClient(clientName) {
+            window.location.href = \`/${encodeURIComponent(
+              serverName
+            )}/for/\${encodeURIComponent(clientName)}?url=${encodeURIComponent(
+    mcpUrl
+  )}\`;
+        }
     </script>
 </body>
 </html>`;
@@ -174,11 +290,27 @@ function generateLandingPage() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Install This MCP</title>
+    <meta name="description" content="Generate shareable installation guides for your MCP server">
+    <meta property="og:title" content="Install This MCP">
+    <meta property="og:description" content="Generate shareable installation guides for your MCP server">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-white font-sans min-h-screen flex items-center justify-center px-4">
+    <!-- GitHub Star Button -->
+    <div class="fixed top-4 right-4 z-50">
+        <iframe src="https://ghbtns.com/github-btn.html?user=janwilmake&repo=install-this-mcp&type=star&count=true&size=large" 
+                frameborder="0" scrolling="0" width="170" height="30" title="GitHub"></iframe>
+    </div>
+
     <div class="max-w-md w-full">
         <div class="text-center mb-8">
+            <div class="w-16 h-16 mx-auto mb-4 bg-black rounded-xl flex items-center justify-center">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
             <h1 class="text-4xl font-bold text-black mb-2">Install This MCP</h1>
             <p class="text-gray-600">Generate shareable installation guides for your MCP server</p>
         </div>
@@ -224,7 +356,7 @@ function generateLandingPage() {
             const url = document.getElementById('url').value;
             
             if (name && url) {
-                window.location.href = '/?name=' + encodeURIComponent(name) + '&url=' + encodeURIComponent(url);
+                window.location.href = '/' + encodeURIComponent(name) + '?url=' + encodeURIComponent(url);
             }
         });
     </script>
@@ -235,13 +367,37 @@ function generateLandingPage() {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const mcpUrl = url.searchParams.get("url");
-    const serverName = url.searchParams.get("name");
 
-    if (mcpUrl && serverName) {
+    // Handle favicon request
+    if (url.pathname === "/favicon.svg") {
+      const favicon = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+</svg>`;
+
+      return new Response(favicon, {
+        headers: {
+          "Content-Type": "image/svg+xml",
+          "Cache-Control": "public, max-age=31536000",
+        },
+      });
+    }
+
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    const mcpUrl = url.searchParams.get("url");
+
+    // Parse new URL structure: /{name}[/for/{client}]?url={url}
+    if (pathParts.length > 0 && mcpUrl) {
+      const serverName = decodeURIComponent(pathParts[0]);
+      let selectedClient = null;
+
+      // Check if it's the "for" client pattern: /{name}/for/{client}
+      if (pathParts.length === 3 && pathParts[1] === "for") {
+        selectedClient = decodeURIComponent(pathParts[2]);
+      }
+
       try {
         const configs = generateMCPConfig(mcpUrl, serverName);
-        const html = generateHTML(mcpUrl, serverName, configs);
+        const html = generateHTML(mcpUrl, serverName, configs, selectedClient);
 
         return new Response(html, {
           headers: {
@@ -257,6 +413,7 @@ export default {
       }
     }
 
+    // Show landing page for root path
     const landingPage = generateLandingPage();
     return new Response(landingPage, {
       headers: {
