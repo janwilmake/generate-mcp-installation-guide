@@ -29,31 +29,18 @@ The Cloudflare Worker is hosted at `installthismcp.com` and provides:
 
 ### Examples
 
-- Landing page: `https://installthismcp.com/`
-- Direct guide: `https://installthismcp.com/Weather%20Server?url=https://api.example.com/mcp`
-
-## Supported Clients
-
-- Cursor
-- VS Code
-- Claude.ai
-- ChatGPT.com
-- Claude Code (CLI)
-- Claude Desktop
-- Windsurf
-- Cline
-- Gemini CLI
-
-## Features
-
-- 🔗 Deep links for one-click installation (where supported)
-- 📋 Copy-to-clipboard functionality
-- 🎨 Beautiful, responsive styling
-- 📱 Mobile-friendly design
-- ⚡ Fast Cloudflare Worker deployment
+- Landing page: https://installthismcp.com
+- Direct guide: https://installthismcp.com/Weather%20Server?url=https://api.example.com/mcp
 
 ## Development
 
 1. Install dependencies: `npm install`
 2. Test locally: `wrangler dev`
 3. Deploy: `wrangler publish`
+
+## TODO
+
+- For clients that don't support oauth, there must be a way to say that in the form, and with that, have different instructions that include api key OR disable these clients if the MCP doesn't allow URL or header-based auth
+- Keep track of which URLs get most traffic. Add these to sitemap?
+- Keep track of which clients get most installation clicks. These should be on top?
+- OR: find a way to keep doing MCP Client research every month or so, such that this repo is maintained.
