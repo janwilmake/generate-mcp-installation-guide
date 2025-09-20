@@ -180,7 +180,7 @@ function generateLandingPage() {
     <div class="max-w-md w-full">
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-black mb-2">Install This MCP</h1>
-            <p class="text-gray-600">Generate installation guides for your MCP server</p>
+            <p class="text-gray-600">Generate shareable installation guides for your MCP server</p>
         </div>
         
         <form id="mcpForm" class="space-y-6">
@@ -212,8 +212,8 @@ function generateLandingPage() {
         
         <div class="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
             <h3 class="font-medium text-black mb-2">Example</h3>
-            <p class="text-sm text-gray-600"><strong>Name:</strong> Weather MCP</p>
-            <p class="text-sm text-gray-600"><strong>URL:</strong> https://weather-mcp.example.com/mcp</p>
+            <p class="text-sm text-gray-600"><strong>Name:</strong> Parallel Task MCP</p>
+            <p class="text-sm text-gray-600"><strong>URL:</strong> https://task-mcp.parallel.ai/mcp</p>
         </div>
     </div>
     
