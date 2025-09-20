@@ -38,13 +38,6 @@ function generateMCPConfig(mcpUrl, serverName) {
       },
     },
     {
-      client: "Claude.ai",
-      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
-      instructions: `Go to https://claude.ai/settings/connectors and select 'add custom connector'. Fill in:
-- **Name**: ${serverName}
-- **URL**: ${mcpUrl}`,
-    },
-    {
       client: "ChatGPT.com",
       iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
       instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
@@ -58,6 +51,14 @@ Fill in:
 - **Authentication**: OAuth
 
 In a new chat ensure developer mode is turned on with the connector(s) selected.`,
+    },
+
+    {
+      client: "Claude.ai",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
+      instructions: `Go to https://claude.ai/settings/connectors and select 'add custom connector'. Fill in:
+- **Name**: ${serverName}
+- **URL**: ${mcpUrl}`,
     },
 
     {
