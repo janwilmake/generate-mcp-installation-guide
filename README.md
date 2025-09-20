@@ -41,6 +41,5 @@ The Cloudflare Worker is hosted at `installthismcp.com` and provides:
 ## TODO
 
 - For clients that don't support oauth, there must be a way to say that in the form, and with that, have different instructions that include api key OR disable these clients if the MCP doesn't allow URL or header-based auth
-- Keep track of which URLs get most traffic. Add these to sitemap?
-- Keep track of which clients get most installation clicks. These should be on top?
-- OR: find a way to keep doing MCP Client research every month or so, such that this repo is maintained.
+- Keep track of which URLs get most traffic. This is potentially a nice way to start a registry.
+- Find a way to keep doing MCP Client research every month or so, such that this repo is maintained.
