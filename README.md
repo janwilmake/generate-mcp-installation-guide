@@ -30,7 +30,7 @@ The Cloudflare Worker is hosted at `installthismcp.com` and provides:
 ### Examples
 
 - Landing page: `https://installthismcp.com/`
-- Direct guide: `https://installthismcp.com/?url=https://api.example.com/mcp&name=Weather%20Server`
+- Direct guide: `https://installthismcp.com/Weather%20Server?url=https://api.example.com/mcp`
 
 ## Supported Clients
 

@@ -1,4 +1,4 @@
-const { generateMCPConfig } = require("./index");
+const { generateMCPConfig, generateMCPInstallationGuide } = require("./index");
 
 function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
   const apexDomain = new URL(mcpUrl).hostname
@@ -26,6 +26,96 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
   const clientIcon = selectedClient
     ? displayConfigs[0]?.iconUrl
     : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=64`;
+
+  // Generate copyable content for all clients view
+  let copyableContent = "";
+  if (!selectedClient) {
+    const baseUrl = `https://installthismcp.com/${encodeURIComponent(
+      serverName
+    )}?url=${encodeURIComponent(mcpUrl)}`;
+    const fullGuide = generateMCPInstallationGuide(mcpUrl, serverName);
+
+    const permalinkMarkdown = configs
+      .map((config) => {
+        const clientUrl = `https://installthismcp.com/${encodeURIComponent(
+          serverName
+        )}/for/${encodeURIComponent(config.client)}?url=${encodeURIComponent(
+          mcpUrl
+        )}`;
+        return `- [${config.client}](${clientUrl})`;
+      })
+      .join("\n");
+
+    const buttonMarkdown = `[![Install ${serverName}](https://img.shields.io/badge/Install-${encodeURIComponent(
+      serverName
+    )}-black?style=for-the-badge)](${baseUrl})`;
+
+    copyableContent = `
+        <!-- Copyable Content Section -->
+        <div class="mt-12 space-y-6">
+            <h3 class="text-xl font-semibold text-black mb-6">Share This Guide</h3>
+            
+            <div class="space-y-4">
+                <!-- Full Guide Markdown -->
+                <div class="border border-apple-gray-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-medium text-apple-gray-700">Full Installation Guide (${
+                          fullGuide.split("\n").length
+                        } lines)</span>
+                        <button onclick="copyToClipboard('fullGuide')" 
+                                class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <textarea id="fullGuide" class="w-full h-24 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${fullGuide}</textarea>
+                </div>
+                
+                <!-- Client Permalinks -->
+                <div class="border border-apple-gray-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-medium text-apple-gray-700">Client Permalinks (${
+                          configs.length
+                        } lines)</span>
+                        <button onclick="copyToClipboard('permalinks')" 
+                                class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <textarea id="permalinks" class="w-full h-24 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${permalinkMarkdown}</textarea>
+                </div>
+                
+                <!-- Button Markdown -->
+                <div class="border border-apple-gray-200 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-medium text-apple-gray-700">Install Button (1 line)</span>
+                        <button onclick="copyToClipboard('buttonMarkdown')" 
+                                class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div class="space-y-2">
+                        <textarea id="buttonMarkdown" class="w-full h-12 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${buttonMarkdown}</textarea>
+                        <div class="text-center">
+                            <span class="text-xs text-apple-gray-500">Preview:</span><br>
+                            <img src="https://img.shields.io/badge/Install-${encodeURIComponent(
+                              serverName
+                            )}-black?style=for-the-badge" alt="Install button preview" class="mt-1">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -256,6 +346,8 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
               .join("")}
         </div>
 
+        ${copyableContent}
+
         <!-- Footer -->
         <div class="text-center mt-12 pt-8 border-t border-apple-gray-200">
             <p class="text-apple-gray-500 text-sm">Generated by installthismcp.com</p>
@@ -264,10 +356,29 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     
     <script>
         function copyToClipboard(text) {
+            // If text is an ID, get the content from that element
+            if (typeof text === 'string' && document.getElementById(text)) {
+                const element = document.getElementById(text);
+                text = element.value || element.textContent;
+            }
+            
             navigator.clipboard.writeText(text).then(() => {
                 console.log('Copied to clipboard');
+                // Could add a toast notification here
             }).catch(err => {
                 console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    console.log('Copied to clipboard (fallback)');
+                } catch (err) {
+                    console.error('Fallback copy failed: ', err);
+                }
+                document.body.removeChild(textArea);
             });
         }
         
