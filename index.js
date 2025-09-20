@@ -1,7 +1,8 @@
-function generateMCPInstallationGuide(mcpUrl, serverName) {
+function generateMCPConfig(mcpUrl, serverName) {
   const configs = [
     {
       client: "Cursor",
+      iconUrl: "https://www.google.com/s2/favicons?domain=cursor.com&sz=32",
       deepLink: `https://cursor.com/en/install-mcp?name=${encodeURIComponent(
         serverName
       )}&config=${btoa(JSON.stringify({ url: mcpUrl }))}`,
@@ -17,6 +18,8 @@ function generateMCPInstallationGuide(mcpUrl, serverName) {
     },
     {
       client: "VS Code",
+      iconUrl:
+        "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=32",
       deepLink: `https://insiders.vscode.dev/redirect/mcp/install?name=${encodeURIComponent(
         serverName
       )}&config=${encodeURIComponent(
@@ -36,12 +39,14 @@ function generateMCPInstallationGuide(mcpUrl, serverName) {
     },
     {
       client: "Claude.ai",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
       instructions: `Go to https://claude.ai/settings/connectors and select 'add custom connector'. Fill in:
 - **Name**: ${serverName}
 - **URL**: ${mcpUrl}`,
     },
     {
       client: "ChatGPT.com",
+      iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
       instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
 
 Then, in connector settings click 'create'.
@@ -57,19 +62,21 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
 
     {
       client: "Claude Code",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
       remoteCommand: `claude mcp add --transport http ${serverName} ${mcpUrl}`,
       instructions: "Run the command in your terminal",
     },
 
     {
       client: "Claude Desktop",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
       instructions: `Go to Settings → Connectors → Add Custom Connector and fill in:
 - **Name**: ${serverName}
 - **URL**: ${mcpUrl}`,
     },
-
     {
       client: "Windsurf",
+      iconUrl: "https://www.google.com/s2/favicons?domain=codeium.com&sz=32",
       instructions: "Add to your Windsurf MCP configuration",
       configJson: {
         mcpServers: {
@@ -81,6 +88,7 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
     },
     {
       client: "Cline",
+      iconUrl: "https://www.google.com/s2/favicons?domain=github.com&sz=32",
       instructions:
         "Go to MCP Servers section → Remote Servers → Edit Configuration",
       configJson: {
@@ -94,6 +102,8 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
     },
     {
       client: "Gemini CLI",
+      iconUrl:
+        "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=32",
       instructions: "Add to `~/.gemini/settings.json`",
       configJson: {
         mcpServers: {
@@ -102,6 +112,12 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
       },
     },
   ];
+
+  return configs;
+}
+
+function generateMCPInstallationGuide(mcpUrl, serverName) {
+  const configs = generateMCPConfig(mcpUrl, serverName);
 
   let markdown = `# MCP Server Installation Guide\n\n`;
   markdown += `**Server Name**: \`${serverName}\`  \n`;
@@ -136,9 +152,7 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
   return markdown;
 }
 
-// Example usage:
-// const guide = generateMCPInstallationGuide(
-//   "https://task-mcp.parallel.ai/mcp",
-//   "Parallel Task MCP"
-// );
-// console.log(guide);
+module.exports = {
+  generateMCPConfig,
+  generateMCPInstallationGuide,
+};

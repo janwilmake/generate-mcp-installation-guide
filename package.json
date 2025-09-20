@@ -1,0 +1,17 @@
+{
+  "name": "install-this-mcp",
+  "version": "0.0.1",
+  "description": "Generate installation guides for MCP servers across different clients",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "keywords": [
+    "mcp",
+    "installation",
+    "guide",
+    "cursor",
+    "claude",
+    "vscode"
+  ],
+  "author": "Jan Wilmake",
+  "license": "MIT"
+}
