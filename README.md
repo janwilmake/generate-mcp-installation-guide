@@ -38,6 +38,16 @@ The Cloudflare Worker is hosted at `installthismcp.com` and provides:
 2. Test locally: `wrangler dev`
 3. Deploy: `wrangler publish`
 
+## FAQ
+
+**Does this support local MCPs?**
+
+No, this is currently out of scope for us. installthismcp.com only supports remote MCPs. However, please reach out if you want to contribute and maintain this part.
+
+**Does this support MCPs requiring API keys?**
+
+No, also this is out of scope, and we are working towards a world where every client offers one-click installation without complex configuration instructions. Currently only public MCPs (without auth) or MCPs with OAuth (according to the [MCP protocol spec](https://modelcontextprotocol.io/specification/draft/basic/authorization)) are supported.
+
 ## TODO
 
 - For clients that don't support oauth, there must be a way to say that in the form, and with that, have different instructions that include api key OR disable these clients if the MCP doesn't allow URL or header-based auth

@@ -46,7 +46,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
       })
       .join("\n");
 
-    const buttonMarkdown = `[![Install ${serverName}](https://img.shields.io/badge/Install-${encodeURIComponent(
+    const buttonMarkdown = `[![Install ${serverName}](https://img.shields.io/badge/Install_MCP-${encodeURIComponent(
       serverName
     )}-black?style=for-the-badge)](${baseUrl})`;
 
