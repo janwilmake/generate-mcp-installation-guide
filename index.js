@@ -37,28 +37,15 @@ function generateMCPConfig(mcpUrl, serverName) {
         },
       },
     },
+
     {
-      client: "ChatGPT.com",
-      iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
-      instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
-
-Then, in connector settings click 'create'.
-      
-Fill in:
-
+      client: "Claude Desktop / Claude.ai",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
+      instructions: `Go to Settings → Connectors → Add Custom Connector and fill in:
 - **Name**: ${serverName}
 - **URL**: ${mcpUrl}
-- **Authentication**: OAuth
 
-In a new chat ensure developer mode is turned on with the connector(s) selected.`,
-    },
-
-    {
-      client: "Claude.ai",
-      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
-      instructions: `Go to https://claude.ai/settings/connectors and select 'add custom connector'. Fill in:
-- **Name**: ${serverName}
-- **URL**: ${mcpUrl}`,
+Please note that if you are part of an organisation, you may not have access to custom connectors at this point. Ask your org administator.`,
     },
 
     {
@@ -68,13 +55,6 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
       instructions: "Run the command in your terminal",
     },
 
-    {
-      client: "Claude Desktop",
-      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
-      instructions: `Go to Settings → Connectors → Add Custom Connector and fill in:
-- **Name**: ${serverName}
-- **URL**: ${mcpUrl}`,
-    },
     {
       client: "Windsurf",
       iconUrl: "https://www.google.com/s2/favicons?domain=codeium.com&sz=32",
@@ -111,6 +91,23 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
           [serverName]: { httpUrl: mcpUrl },
         },
       },
+    },
+    {
+      client: "ChatGPT.com",
+      iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
+      instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
+
+Then, in connector settings click 'create'.
+      
+Fill in:
+
+- **Name**: ${serverName}
+- **URL**: ${mcpUrl}
+- **Authentication**: OAuth
+
+In a new chat ensure developer mode is turned on with the connector(s) selected.
+
+Please note that [Developer Mode](https://platform.openai.com/docs/guides/developer-mode) must be enabled.`,
     },
   ];
 
