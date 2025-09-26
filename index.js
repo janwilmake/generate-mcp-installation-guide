@@ -51,7 +51,7 @@ Please note that if you are part of an organisation, you may not have access to 
     {
       client: "Claude Code",
       iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
-      remoteCommand: `claude mcp add --transport http ${serverName} ${mcpUrl}`,
+      remoteCommand: `claude mcp add --transport http "${serverName}" ${mcpUrl}`,
       instructions: "Run the command in your terminal",
     },
 
@@ -93,7 +93,7 @@ Please note that if you are part of an organisation, you may not have access to 
       },
     },
     {
-      client: "ChatGPT.com",
+      client: "ChatGPT",
       iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
       instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
 
@@ -107,7 +107,7 @@ Fill in:
 
 In a new chat ensure developer mode is turned on with the connector(s) selected.
 
-Please note that [Developer Mode](https://platform.openai.com/docs/guides/developer-mode) must be enabled.`,
+Please note that <a href="https://platform.openai.com/docs/guides/developer-mode" target="_blank">Developer Mode</a> must be enabled and this feature may not be available for everyone..`,
     },
   ];
 

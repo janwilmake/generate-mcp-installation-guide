@@ -106,7 +106,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                         <textarea id="buttonMarkdown" class="w-full h-12 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${buttonMarkdown}</textarea>
                         <div class="text-center">
                             <span class="text-xs text-apple-gray-500">Preview:</span><br>
-                            <img src="https://img.shields.io/badge/Install-${encodeURIComponent(
+                            <img src="https://img.shields.io/badge/Install_MCP-${encodeURIComponent(
                               serverName
                             )}-black?style=for-the-badge" alt="Install button preview" class="mt-1">
                         </div>
