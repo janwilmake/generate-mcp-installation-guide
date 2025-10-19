@@ -1,6 +1,6 @@
 {
   "name": "install-this-mcp",
-  "version": "0.0.2",
+  "version": "0.0.6",
   "description": "Generate installation guides for MCP servers across different clients",
   "main": "index.js",
   "types": "index.d.ts",

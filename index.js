@@ -1,3 +1,10 @@
+/**
+ *
+ * @param {string} mcpUrl
+ * @param {string} serverName
+ * @returns
+ */
+
 function generateMCPConfig(mcpUrl, serverName) {
   const configs = [
     {
@@ -51,7 +58,9 @@ Please note that if you are part of an organisation, you may not have access to 
     {
       client: "Claude Code",
       iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
-      remoteCommand: `claude mcp add --transport http "${serverName}" ${mcpUrl}`,
+      remoteCommand: `claude mcp add --transport http "${serverName
+        .replaceAll(" ", "-")
+        .replaceAll(".", "_")}" ${mcpUrl}`,
       instructions: "Run the command in your terminal",
     },
 
@@ -108,6 +117,13 @@ Fill in:
 In a new chat ensure developer mode is turned on with the connector(s) selected.
 
 Please note that <a href="https://platform.openai.com/docs/guides/developer-mode" target="_blank">Developer Mode</a> must be enabled and this feature may not be available for everyone..`,
+    },
+    {
+      client: "Context Area",
+      instructions: "Click to install",
+      iconUrl:
+        "https://www.google.com/s2/favicons?domain=contextarea.com&sz=32",
+      deepLink: `https://contextarea.com/?mcp=${encodeURIComponent(mcpUrl)}`,
     },
   ];
 

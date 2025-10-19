@@ -62,12 +62,12 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                         <span class="text-sm font-medium text-apple-gray-700">Full Installation Guide (${
                           fullGuide.split("\n").length
                         } lines)</span>
-                        <button onclick="copyToClipboard('fullGuide')" 
+                        <button onclick="copyToClipboard(document.getElementById('fullGuide').value, this)" 
                                 class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
-                            Copy
+                            <span>Copy</span>
                         </button>
                     </div>
                     <textarea id="fullGuide" class="w-full h-24 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${fullGuide}</textarea>
@@ -79,12 +79,12 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                         <span class="text-sm font-medium text-apple-gray-700">Client Permalinks (${
                           configs.length
                         } lines)</span>
-                        <button onclick="copyToClipboard('permalinks')" 
+                        <button onclick="copyToClipboard(document.getElementById('permalinks').value, this)" 
                                 class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
-                            Copy
+                            <span>Copy</span>
                         </button>
                     </div>
                     <textarea id="permalinks" class="w-full h-24 text-xs text-apple-gray-800 bg-apple-gray-50 border border-apple-gray-200 rounded p-3 resize-none font-mono" readonly>${permalinkMarkdown}</textarea>
@@ -94,12 +94,12 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                 <div class="border border-apple-gray-200 rounded-xl p-4">
                     <div class="flex items-center justify-between mb-3">
                         <span class="text-sm font-medium text-apple-gray-700">Install Button (1 line)</span>
-                        <button onclick="copyToClipboard('buttonMarkdown')" 
+                        <button onclick="copyToClipboard(document.getElementById('buttonMarkdown').value, this)" 
                                 class="flex items-center gap-2 px-3 py-1.5 bg-apple-gray-100 text-apple-gray-700 text-sm rounded-lg hover:bg-apple-gray-200 transition-colors">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                             </svg>
-                            Copy
+                            <span>Copy</span>
                         </button>
                     </div>
                     <div class="space-y-2">
@@ -156,6 +156,43 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
         }
       }
     </script>
+    <style>
+        /* Toast notification styles */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(100%);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+        }
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        
+        /* Button feedback styles */
+        .btn-copied {
+            background-color: #10b981 !important;
+            color: white !important;
+        }
+        .btn-copied svg {
+            display: none;
+        }
+        .btn-copied::after {
+            content: '✓';
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body class="bg-white font-sans">
     <!-- GitHub Star Button -->
@@ -300,9 +337,12 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                         <div class="bg-black text-green-400 p-4 rounded-lg mb-4 font-mono text-sm">
                             <div class="flex items-center justify-between">
                                 <span>$ ${config.remoteCommand}</span>
-                                <button onclick="copyToClipboard('${config.remoteCommand}')" 
-                                        class="text-apple-gray-400 hover:text-white text-xs">
-                                    Copy
+                                <button onclick="copyToClipboard('${config.remoteCommand?.replace(
+                                  /'/g,
+                                  "\\'"
+                                )}', this)" 
+                                        class="text-apple-gray-400 hover:text-white text-xs px-2 py-1 rounded transition-colors">
+                                    <span>Copy</span>
                                 </button>
                             </div>
                         </div>
@@ -312,7 +352,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                     
                     <div class="prose prose-sm max-w-none mb-4">
                         <div class="text-apple-gray-700">${config.instructions
-                          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                          ?.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
                           .replace(/\n/g, "<br>")}</div>
                     </div>
                     
@@ -326,9 +366,9 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                                   config.configJson,
                                   null,
                                   2
-                                ).replace(/'/g, "\\'")}') "
-                                        class="text-xs text-apple-gray-500 hover:text-black">
-                                    Copy JSON
+                                ).replace(/'/g, "\\'")}', this)"
+                                        class="text-xs text-apple-gray-500 hover:text-black px-2 py-1 rounded transition-colors">
+                                    <span>Copy JSON</span>
                                 </button>
                             </div>
                             <pre class="text-xs text-apple-gray-800 overflow-x-auto"><code>${JSON.stringify(
@@ -355,31 +395,91 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     </div>
     
     <script>
-        function copyToClipboard(text) {
-            // If text is an ID, get the content from that element
-            if (typeof text === 'string' && document.getElementById(text)) {
-                const element = document.getElementById(text);
-                text = element.value || element.textContent;
-            }
-            
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('Copied to clipboard');
-                // Could add a toast notification here
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-                // Fallback for older browsers
+        // Improved copy to clipboard function with visual feedback
+        async function copyToClipboard(text, buttonElement) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showCopySuccess(buttonElement);
+                showToast('Copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Copy failed, trying fallback method:', err);
+                
+                // Fallback method for older browsers
                 const textArea = document.createElement('textarea');
                 textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-999999px';
+                textArea.style.top = '-999999px';
                 document.body.appendChild(textArea);
+                textArea.focus();
                 textArea.select();
+                
                 try {
-                    document.execCommand('copy');
-                    console.log('Copied to clipboard (fallback)');
-                } catch (err) {
-                    console.error('Fallback copy failed: ', err);
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showCopySuccess(buttonElement);
+                        showToast('Copied to clipboard!', 'success');
+                    } else {
+                        throw new Error('execCommand failed');
+                    }
+                } catch (fallbackErr) {
+                    console.error('Fallback copy also failed:', fallbackErr);
+                    showToast('Failed to copy to clipboard', 'error');
+                } finally {
+                    document.body.removeChild(textArea);
                 }
-                document.body.removeChild(textArea);
-            });
+            }
+        }
+        
+        // Show visual feedback on the button
+        function showCopySuccess(buttonElement) {
+            if (!buttonElement) return;
+            
+            const originalText = buttonElement.innerHTML;
+            const originalClasses = buttonElement.className;
+            
+            // Add success styling
+            buttonElement.classList.add('btn-copied');
+            const span = buttonElement.querySelector('span');
+            if (span) {
+                span.textContent = 'Copied!';
+            }
+            
+            // Reset after 2 seconds
+            setTimeout(() => {
+                buttonElement.className = originalClasses;
+                buttonElement.innerHTML = originalText;
+            }, 2000);
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            // Remove any existing toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = \`toast \${type === 'error' ? 'error' : ''}\`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
         }
         
         function navigateToClient(clientName) {
