@@ -748,14 +748,18 @@ function generateLandingPage() {
 </head>
 <body class="bg-gradient-to-br from-blue-900 to-blue-700 font-sans min-h-screen flex items-center justify-center px-4">
     <div class="max-w-md w-full">
-        <div class="text-center mb-8">
+        <div class="text-center flex flex-col justify-center items-center mb-8">
             <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center shadow-lg">
                 <svg class="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
             </div>
             <h1 class="text-4xl font-bold text-white mb-2">Install This MCP</h1>
-            <p class="text-blue-100">Generate shareable installation guides for your MCP server</p>
+            <p class="text-blue-100">Generate shareable installation guides for your MCP server <br></p>
+
+            <p class="text-center pt-4"><a href="https://github.com/janwilmake/install-this-mcp"><img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" 
+       alt="GitHub stars"></a></p>
+            
         </div>
         
         <div class="bg-white rounded-xl shadow-2xl p-6">
@@ -805,6 +809,7 @@ function generateLandingPage() {
             }
         });
     </script>
+    
 </body>
 </html>`;
 }
