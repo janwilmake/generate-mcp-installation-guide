@@ -1,5 +1,5 @@
 ---
-tools: search-mcp.parallel.ai/mcp task-mcp.parallel.ai/mcp
+mcp: search-mcp.parallel.ai/mcp task-mcp.parallel.ai/mcp
 ---
 
 What are the top 50 contenders to be the most popular clients to use LLMs these days? For each of them, find out the available metrics to determine the amount of use.

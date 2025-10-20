@@ -1,5 +1,7 @@
 # MCP Installation Guide
 
+[X Thread](https://x.com/janwilmake/status/1980196514719813645)
+
 This package and Cloudflare Worker generate comprehensive installation guides for MCP (Model Context Protocol) servers across different clients.
 
 ## Package Usage
