@@ -27,7 +27,7 @@ const markdown = generateMCPInstallationGuide(
 The Cloudflare Worker is hosted at `installthismcp.com` and provides:
 
 1. **Landing page**: Visit the root URL to access a form for entering server details
-2. **Guide generation**: Visit `/?url={mcpUrl}&name={serverName}` to generate a styled HTML guide
+2. **Guide generation**: Visit `/{serverName}?url={mcpUrl}` to generate a styled HTML guide
 
 ### Examples
 
@@ -52,11 +52,9 @@ No, also this is out of scope, and we are working towards a world where every cl
 
 **Can you add LLM client XYZ?**
 
-We favor clients with wide adoption, but less popular clients are also welcome if they have one-click-install deeplink support and support oauth. To add a client, please open a PR.
+We favor clients with wide adoption, but less popular clients are also welcome if they have one-click-install deeplink support and support oauth. To add a client, please open a PR altering [index.js](index.js).
 
 ## TODO
 
-- For clients that don't support oauth, there must be a way to say that in the form, and with that, have different instructions that include api key OR disable these clients if the MCP doesn't allow URL or header-based auth
 - Keep track of which URLs get most traffic. This is potentially a nice way to start a registry.
-- Find a way to keep doing MCP Client research every month or so, such that this repo is maintained.
-- Use agents to find good ideas to get this thing actually used, and execute on it (with more agents)
+- Use parallel to do MCP Client research every week automatically, such that this repo can be maintained with lower overhead.
