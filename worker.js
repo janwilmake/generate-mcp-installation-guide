@@ -239,6 +239,9 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     )}\${iframeParam}\`;
         }
     </script>
+    <!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+
 </body>
 </html>`;
   }
@@ -528,6 +531,9 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             )}\${iframeParam}${encodeURIComponent(mcpUrl)}\`;
         }
     </script>
+    <!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+
 </body>
 </html>`;
 }
@@ -731,6 +737,9 @@ function generateGuidesPage(mcpUrl, serverName, configs) {
             });
         }
     </script>
+    <!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+
 </body>
 </html>`;
 }
@@ -809,7 +818,9 @@ function generateLandingPage() {
             }
         });
     </script>
-    
+   <!-- 100% privacy-first analytics -->
+<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+ 
 </body>
 </html>`;
 }

@@ -118,13 +118,13 @@ In a new chat ensure developer mode is turned on with the connector(s) selected.
 
 Please note that <a href="https://platform.openai.com/docs/guides/developer-mode" target="_blank">Developer Mode</a> must be enabled and this feature may not be available for everyone..`,
     },
-    {
-      client: "Context Area",
-      instructions: "Click to install",
-      iconUrl:
-        "https://www.google.com/s2/favicons?domain=contextarea.com&sz=32",
-      deepLink: `https://contextarea.com/?mcp=${encodeURIComponent(mcpUrl)}`,
-    },
+    // {
+    //   client: "Context Area",
+    //   instructions: "Click to install",
+    //   iconUrl:
+    //     "https://www.google.com/s2/favicons?domain=contextarea.com&sz=32",
+    //   deepLink: `https://contextarea.com/?mcp=${encodeURIComponent(mcpUrl)}`,
+    // },
   ];
 
   return configs;
