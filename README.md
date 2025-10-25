@@ -1,6 +1,8 @@
-# MCP Installation Guide
+# The easiest way to get beautiful MCP Installation Guides for your docs or readme
 
-This package and Cloudflare Worker generate comprehensive installation guides for MCP (Model Context Protocol) servers across different clients.
+> Reduce installation friction for your MCP servers
+
+MCPs can be installed in dozens of clients, and usually requires the user to run commands or edit a JSON configuration file somewhere, sometimes also restart the client. When you're building an MCP server, it's a giant overhead having to provide these instructions to your users for every client. That's where install-this-mcp comes in. This library and website generates comprehensive installation guides for MCP (Model Context Protocol) servers across different clients. [Check the latest demo here](https://x.com/janwilmake/status/1982068067229184181)
 
 Changelog:
 
