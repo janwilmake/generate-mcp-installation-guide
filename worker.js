@@ -25,7 +25,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
 
   const clientIcon = selectedClient
     ? displayConfigs[0]?.iconUrl
-    : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=64`;
+    : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=128`;
 
   // Client list view (when no client is selected)
   if (!selectedClient) {

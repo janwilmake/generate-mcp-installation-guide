@@ -9,7 +9,7 @@ function generateMCPConfig(mcpUrl, serverName) {
   const configs = [
     {
       client: "Cursor",
-      iconUrl: "https://www.google.com/s2/favicons?domain=cursor.com&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=cursor.com&sz=64",
       deepLink: `https://cursor.com/en/install-mcp?name=${encodeURIComponent(
         serverName
       )}&config=${btoa(JSON.stringify({ url: mcpUrl }))}`,
@@ -26,7 +26,7 @@ function generateMCPConfig(mcpUrl, serverName) {
     {
       client: "VS Code",
       iconUrl:
-        "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=32",
+        "https://www.google.com/s2/favicons?domain=code.visualstudio.com&sz=64",
       deepLink: `https://insiders.vscode.dev/redirect/mcp/install?name=${encodeURIComponent(
         serverName
       )}&config=${encodeURIComponent(
@@ -47,7 +47,7 @@ function generateMCPConfig(mcpUrl, serverName) {
 
     {
       client: "Claude Desktop / Claude.ai",
-      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=64",
       instructions: `Go to Settings → Connectors → Add Custom Connector and fill in:
 - **Name**: ${serverName}
 - **URL**: ${mcpUrl}
@@ -57,7 +57,7 @@ Please note that if you are part of an organisation, you may not have access to 
 
     {
       client: "Claude Code",
-      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=claude.ai&sz=64",
       remoteCommand: `claude mcp add --transport http "${serverName
         .replaceAll(" ", "-")
         .replaceAll(".", "_")}" ${mcpUrl}`,
@@ -66,7 +66,7 @@ Please note that if you are part of an organisation, you may not have access to 
 
     {
       client: "Windsurf",
-      iconUrl: "https://www.google.com/s2/favicons?domain=codeium.com&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=codeium.com&sz=64",
       instructions: "Add to your Windsurf MCP configuration",
       configJson: {
         mcpServers: {
@@ -78,7 +78,7 @@ Please note that if you are part of an organisation, you may not have access to 
     },
     {
       client: "Cline",
-      iconUrl: "https://www.google.com/s2/favicons?domain=github.com&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=github.com&sz=64",
       instructions:
         "Go to MCP Servers section → Remote Servers → Edit Configuration",
       configJson: {
@@ -93,7 +93,7 @@ Please note that if you are part of an organisation, you may not have access to 
     {
       client: "Gemini CLI",
       iconUrl:
-        "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=32",
+        "https://www.google.com/s2/favicons?domain=gemini.google.com&sz=64",
       instructions: "Add to `~/.gemini/settings.json`",
       configJson: {
         mcpServers: {
@@ -103,7 +103,7 @@ Please note that if you are part of an organisation, you may not have access to 
     },
     {
       client: "ChatGPT",
-      iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=32",
+      iconUrl: "https://www.google.com/s2/favicons?domain=chatgpt.com&sz=64",
       instructions: `First, go to 'Settings -> Connectors -> Advanced Settings' and turn on 'Developer Mode'.
 
 Then, in connector settings click 'create'.
@@ -122,7 +122,7 @@ Please note that <a href="https://platform.openai.com/docs/guides/developer-mode
     //   client: "Context Area",
     //   instructions: "Click to install",
     //   iconUrl:
-    //     "https://www.google.com/s2/favicons?domain=contextarea.com&sz=32",
+    //     "https://www.google.com/s2/favicons?domain=contextarea.com&sz=64",
     //   deepLink: `https://contextarea.com/?mcp=${encodeURIComponent(mcpUrl)}`,
     // },
   ];
