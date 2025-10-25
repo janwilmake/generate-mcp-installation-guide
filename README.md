@@ -1,8 +1,12 @@
 # MCP Installation Guide
 
-[X Thread](https://x.com/janwilmake/status/1980196514719813645)
-
 This package and Cloudflare Worker generate comprehensive installation guides for MCP (Model Context Protocol) servers across different clients.
+
+Changelog:
+
+- [0.0.1](https://x.com/janwilmake/status/1969379701534646419)
+- [0.2.0](https://x.com/janwilmake/status/1980196514719813645)
+- [0.2.1](https://x.com/janwilmake/status/1982068067229184181)
 
 ## Package Usage
 
@@ -53,8 +57,3 @@ No, also this is out of scope, and we are working towards a world where every cl
 **Can you add LLM client XYZ?**
 
 We favor clients with wide adoption, but less popular clients are also welcome if they have one-click-install deeplink support and support oauth. To add a client, please open a PR altering [index.js](index.js).
-
-## TODO
-
-- Keep track of which URLs get most traffic. This is potentially a nice way to start a registry.
-- Use parallel to do MCP Client research every week automatically, such that this repo can be maintained with lower overhead.

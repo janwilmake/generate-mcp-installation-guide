@@ -1,12 +1,90 @@
 const { generateMCPConfig, generateMCPInstallationGuide } = require("./index");
 
-function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
+/**
+ * @typedef {import("./index").InitializeResult} InitializeResult
+ * @typedef {import("./index").MCPConfig} MCPConfig
+ * @typedef {import("./index").ServerIcon} ServerIcon
+ */
+
+/**
+ * Fetches MCP server metadata via GET request with application/json accept header
+ * @param {string} mcpUrl - MCP server URL
+ * @returns {Promise<InitializeResult | null>} Server metadata or null if unavailable
+ */
+async function fetchMCPMetadata(mcpUrl) {
+  try {
+    const response = await fetch(mcpUrl, {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    /** @type {InitializeResult} */
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Failed to fetch MCP metadata:", error);
+    return null;
+  }
+}
+
+/**
+ * Gets the best icon from server metadata
+ * @param {ServerIcon[] | undefined} icons - Array of server icons
+ * @returns {string | null} Icon URL or null
+ */
+function getBestIcon(icons) {
+  if (!icons || icons.length === 0) return null;
+
+  // Prefer PNG or JPEG, then SVG, then WebP
+  const preferred = icons.find((icon) =>
+    icon.mimeType?.match(/image\/(png|jpeg|jpg)/)
+  );
+  if (preferred) return preferred.src;
+
+  const svg = icons.find((icon) => icon.mimeType === "image/svg+xml");
+  if (svg) return svg.src;
+
+  return icons[0].src;
+}
+
+/**
+ * Generates HTML for the installation widget
+ * @param {string} mcpUrl - MCP server URL
+ * @param {string} serverName - Server display name
+ * @param {MCPConfig[]} configs - Client configurations
+ * @param {string | null} selectedClient - Selected client name
+ * @param {InitializeResult | null} metadata - Server metadata
+ * @returns {string} HTML string
+ */
+function generateHTML(
+  mcpUrl,
+  serverName,
+  configs,
+  selectedClient = null,
+  metadata = null
+) {
   const apexDomain = new URL(mcpUrl).hostname
     .split(".")
     .reverse()
     .slice(0, 2)
     .reverse()
     .join(".");
+
+  // Use metadata if available
+  const displayName = metadata?.serverInfo?.title || serverName;
+  const version = metadata?.serverInfo?.version;
+  const websiteUrl = metadata?.serverInfo?.websiteUrl;
+  const description =
+    metadata?.serverInfo?.description || metadata?.instructions;
+  const serverIcon =
+    getBestIcon(metadata?.serverInfo?.icons) ||
+    `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=128`;
 
   // Filter configs if a specific client is selected
   const displayConfigs = selectedClient
@@ -16,18 +94,16 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     : configs;
 
   const pageTitle = selectedClient
-    ? `Install ${serverName} for ${selectedClient}`
-    : `Install ${serverName}`;
+    ? `Install ${displayName} for ${selectedClient}`
+    : `Install ${displayName}`;
 
   const pageDescription = selectedClient
-    ? `Install ${serverName} MCP server for ${selectedClient}`
-    : `Connect ${serverName} MCP server to any client`;
+    ? `Install ${displayName} MCP server for ${selectedClient}`
+    : `Connect ${displayName} MCP server to any client`;
 
-  const clientIcon = selectedClient
-    ? displayConfigs[0]?.iconUrl
-    : `https://www.google.com/s2/favicons?domain=${apexDomain}&sz=128`;
+  const clientIcon = selectedClient ? displayConfigs[0]?.iconUrl : serverIcon;
 
-  // Client list view (when no client is selected)
+  // Client list view
   if (!selectedClient) {
     return `<!DOCTYPE html>
 <html lang="en">
@@ -44,7 +120,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background: #fafafa;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -59,10 +135,11 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             height: 600px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
             overflow: hidden;
             background: white;
+            border: 1px solid #e5e7eb;
         }
         
         .client-list {
@@ -71,22 +148,30 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
         }
         
         .client-card {
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
         }
         
         .client-card:hover {
             background-color: #f9fafb;
-            transform: translateX(4px);
         }
         
         .footer-link {
-            color: white;
-            opacity: 0.8;
-            transition: opacity 0.2s;
+            color: #6b7280;
+            transition: color 0.2s;
         }
         
         .footer-link:hover {
-            opacity: 1;
+            color: #111827;
+        }
+
+        .instructions-section {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .instructions-section.expanded {
+            max-height: 500px;
         }
 
         /* Iframe mode styles */
@@ -101,28 +186,11 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             height: 100vh;
             box-shadow: none;
             border-radius: 0;
-        }
-
-        .iframe-mode .header-section {
-            background: white;
-            color: #1f2937;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .iframe-mode .header-title {
-            color: #1f2937;
-        }
-
-        .iframe-mode .header-url {
-            color: #6b7280;
+            border: none;
         }
 
         .iframe-mode .footer-wrapper {
             display: none;
-        }
-        
-        .iframe-mode .install-text {
-            color: black !important;
         }
 
         @media (max-width: 600px) {
@@ -135,17 +203,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                 height: 100vh;
                 box-shadow: none;
                 border-radius: 0;
-            }
-            .header-section {
-                background: white;
-                color: #1f2937;
-                border-bottom: 1px solid #e5e7eb;
-            }
-            .header-title {
-                color: #1f2937;
-            }
-            .header-url {
-                color: #6b7280;
+                border: none;
             }
             .footer-wrapper {
                 display: none;
@@ -156,18 +214,50 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
 <body>
     <div class="widget-container">
         <!-- Header -->
-        <div class="header-section bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-8 text-white flex-shrink-0">
+        <div class="px-6 py-6 border-b border-gray-200 flex-shrink-0">
             <div class="flex items-center gap-4 mb-3">
-                <img src="${clientIcon}" 
-                     alt="${serverName}" 
-                     class="w-12 h-12 rounded-lg bg-white/10 backdrop-blur p-1.5"
-                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22white%22%3E%3Cpath d=%22M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z%22/%3E%3C/svg%3E'">
+                <img src="${serverIcon}" 
+                     alt="${displayName}" 
+                     class="w-12 h-12 rounded-lg"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22%23d1d5db%22%3E%3Cpath d=%22M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z%22/%3E%3C/svg%3E'">
                 <div class="flex-1 min-w-0">
-                    <h1 class="header-title text-2xl font-bold truncate">${serverName}</h1>
-                    <p class="header-url text-blue-100 text-sm truncate">${mcpUrl}</p>
+                    <h1 class="text-xl font-semibold text-gray-900 truncate">${displayName}</h1>
+                    <div class="flex items-center gap-2 text-sm text-gray-500">
+                        ${
+                          version
+                            ? `<span class="text-xs bg-gray-100 px-2 py-0.5 rounded">v${version}</span>`
+                            : ""
+                        }
+                        ${
+                          websiteUrl
+                            ? `<a href="${websiteUrl}" target="_blank" class="text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                            Website
+                        </a>`
+                            : ""
+                        }
+                    </div>
                 </div>
             </div>
-            <p id="install-text" class="text-sm">Choose your client to install</p>
+            ${
+              description
+                ? `
+            <div class="mt-3">
+                <button onclick="toggleInstructions()" 
+                        class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                    <svg id="instructions-icon" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                    <span>Description</span>
+                </button>
+                <div id="instructions-section" class="instructions-section mt-2 text-sm text-gray-600 whitespace-pre-wrap">${description}</div>
+            </div>
+            `
+                : ""
+            }
+            <p class="text-sm text-gray-600 mt-3">Choose your client to install</p>
         </div>
 
         <!-- Client List -->
@@ -179,10 +269,11 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                   config.client
                 }')">
                     <div class="px-6 py-4 flex items-center gap-4">
-                        <img src="${config.iconUrl}" 
-                             alt="${config.client}" 
-                             class="w-10 h-10 rounded-lg flex-shrink-0"
-                             onerror="this.style.display='none'">
+                        <div class="w-10 h-10"><img src="${
+                          config.iconUrl
+                        }" alt="${
+                  config.client
+                }" class="w-10 h-10 rounded-lg flex-shrink-0" onerror="this.style.display='none'"></div>
                         <span class="font-medium text-gray-900 flex-1">${
                           config.client
                         }</span>
@@ -190,7 +281,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                           config.deepLink
                             ? `
                             <button onclick="event.stopPropagation(); window.location.href='${config.deepLink}'"
-                                    class="px-3 py-1.5 bg-blue-900 text-white text-sm rounded-lg hover:bg-blue-800 transition-colors flex-shrink-0">
+                                    class="px-3 py-1.5 bg-gray-900 text-white text-sm rounded hover:bg-gray-700 transition-colors flex-shrink-0">
                                 Install Now
                             </button>
                         `
@@ -209,6 +300,16 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     </div>
     
     <div class="footer-wrapper text-center mt-6 mb-4">
+
+        <div>
+            <a href="https://github.com/janwilmake/install-this-mcp" 
+            class="footer-link flex flex-row items-center gap-2 text-sm">
+                <img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" alt="GitHub stars">
+                <span>Installation instructions powered by install-this-mcp</span>
+            </a>
+        </div>
+
+        <div>
         <a href="/${encodeURIComponent(
           serverName
         )}/guides?url=${encodeURIComponent(mcpUrl)}" 
@@ -216,18 +317,26 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
             </svg>
-            <span>Install onto your docs/website</span>
+            <span>Want this guide into your docs or README?</span>
         </a>
+        </div>
     </div>
+
     
     <script>
-        // Check for iframe mode
         const urlParams = new URLSearchParams(window.location.search);
         const isIframeParam = urlParams.get('iframe') === '1';
         const isSmallScreen = window.innerWidth <= 600;
         
         if (isIframeParam || isSmallScreen) {
             document.documentElement.classList.add('iframe-mode');
+        }
+
+        function toggleInstructions() {
+            const section = document.getElementById('instructions-section');
+            const icon = document.getElementById('instructions-icon');
+            section.classList.toggle('expanded');
+            icon.style.transform = section.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
         }
 
         function navigateToClient(clientName) {
@@ -239,9 +348,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     )}\${iframeParam}\`;
         }
     </script>
-    <!-- 100% privacy-first analytics -->
-<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>`;
   }
@@ -264,13 +371,14 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            background: #fafafa;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 1rem;
+            overflow: hidden;
         }
         
         .widget-container {
@@ -279,10 +387,11 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             height: 600px;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border-radius: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
             overflow: hidden;
             background: white;
+            border: 1px solid #e5e7eb;
         }
         
         .content-scroll {
@@ -292,7 +401,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
         
         .tab-item {
             flex: 0 0 auto;
-            opacity: 0.5;
+            opacity: 0.4;
             transition: opacity 0.2s;
         }
         
@@ -301,17 +410,16 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
         }
         
         .tab-item:hover {
-            opacity: 0.8;
+            opacity: 0.7;
         }
         
         .footer-link {
-            color: white;
-            opacity: 0.8;
-            transition: opacity 0.2s;
+            color: #6b7280;
+            transition: color 0.2s;
         }
         
         .footer-link:hover {
-            opacity: 1;
+            color: #111827;
         }
 
         /* Iframe mode styles */
@@ -327,12 +435,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             height: 100vh;
             box-shadow: none;
             border-radius: 0;
-        }
-
-        .iframe-mode .header-section {
-            background: white;
-            color: #1f2937;
-            border-bottom: 1px solid #e5e7eb;
+            border: none;
         }
 
         .iframe-mode .content-scroll {
@@ -355,6 +458,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
                 height: 100vh;
                 box-shadow: none;
                 border-radius: 0;
+                border: none;
             }
             .content-scroll {
                 overflow-y: auto;
@@ -369,21 +473,21 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
 <body>
     <div class="widget-container">
         <!-- Header with Back Button -->
-        <div class="header-section bg-gradient-to-r from-blue-900 to-blue-700 px-6 py-4 text-white flex-shrink-0">
+        <div class="px-6 py-4 border-b border-gray-200 flex-shrink-0">
             <div class="flex items-center gap-3 mb-3">
                 <button onclick="navigateBack()"
-                        class="p-2 -ml-2 hover:bg-white/10 rounded-lg transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="p-2 -ml-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-xl font-bold truncate">${serverName}</h1>
-                    <p class="text-sm">for ${selectedClient}</p>
+                    <h1 class="text-lg font-semibold text-gray-900 truncate">${displayName}</h1>
+                    <p class="text-sm text-gray-600">for ${selectedClient}</p>
                 </div>
                 <img src="${currentConfig.iconUrl}" 
                      alt="${selectedClient}" 
-                     class="w-10 h-10 rounded-lg bg-white/10 backdrop-blur p-1.5"
+                     class="w-10 h-10 rounded-lg"
                      onerror="this.style.display='none'">
             </div>
         </div>
@@ -416,7 +520,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
               currentConfig.deepLink
                 ? `
                 <a href="${currentConfig.deepLink}" 
-                   class="block w-full mb-6 px-4 py-3 bg-blue-900 text-white text-center rounded-lg hover:bg-blue-800 transition-colors font-medium">
+                   class="block w-full mb-6 px-4 py-3 bg-gray-900 text-white text-center rounded hover:bg-gray-700 transition-colors font-medium">
                     Quick Install in ${selectedClient}
                 </a>
             `
@@ -426,7 +530,7 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             ${
               currentConfig.remoteCommand
                 ? `
-                <div class="bg-black text-green-400 p-4 rounded-lg mb-4 font-mono text-sm">
+                <div class="bg-gray-900 text-green-400 p-4 rounded mb-4 font-mono text-sm">
                     <div class="flex items-center justify-between gap-2">
                         <span class="break-all flex-1">$ ${currentConfig.remoteCommand}</span>
                         <button onclick="copyText(this.previousElementSibling.textContent.trim().substring(2), this)" 
@@ -448,11 +552,11 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             ${
               currentConfig.configJson
                 ? `
-                <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div class="bg-gray-50 rounded border border-gray-200 p-4">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-sm font-medium text-gray-700">Configuration</span>
                         <button onclick="copyText(this.parentElement.nextElementSibling.textContent, this)"
-                                class="text-xs text-gray-500 hover:text-black px-2 py-1 rounded transition-colors">
+                                class="text-xs text-gray-600 hover:text-gray-900 px-2 py-1 rounded transition-colors">
                             Copy JSON
                         </button>
                     </div>
@@ -469,6 +573,16 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
     </div>
     
     <div class="footer-wrapper text-center mt-6 mb-4">
+
+        <div>
+            <a href="https://github.com/janwilmake/install-this-mcp" 
+            class="footer-link flex flex-row items-center gap-2 text-sm">
+                <img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" alt="GitHub stars">
+                <span>Installation instructions powered by install-this-mcp</span>
+            </a>
+        </div>
+
+        <div>
         <a href="/${encodeURIComponent(
           serverName
         )}/guides?url=${encodeURIComponent(mcpUrl)}" 
@@ -476,12 +590,12 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
             </svg>
-            <span>Install onto your docs/website</span>
+            <span>Want this guide into your docs or README?</span>
         </a>
+        </div>
     </div>
     
     <script>
-        // Check for iframe mode
         const urlParams = new URLSearchParams(window.location.search);
         const isIframeParam = urlParams.get('iframe') === '1';
         const isSmallScreen = window.innerWidth <= 600;
@@ -531,19 +645,18 @@ function generateHTML(mcpUrl, serverName, configs, selectedClient = null) {
             )}\${iframeParam}${encodeURIComponent(mcpUrl)}\`;
         }
     </script>
-    <!-- 100% privacy-first analytics -->
-<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>`;
 }
 
-function escapeHtml(text) {
-  const div = document.createElement("div");
-  div.textContent = text;
-  return div.innerHTML;
-}
-
+/**
+ * Generates the guides page HTML
+ * @param {string} mcpUrl - MCP server URL
+ * @param {string} serverName - Server display name
+ * @param {MCPConfig[]} configs - Client configurations
+ * @returns {string} HTML string
+ */
 function generateGuidesPage(mcpUrl, serverName, configs) {
   const baseUrl = `https://installthismcp.com/${encodeURIComponent(
     serverName
@@ -584,51 +697,169 @@ function generateGuidesPage(mcpUrl, serverName, configs) {
             white-space: pre-wrap;
             word-wrap: break-word;
         }
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .collapsible-content.expanded {
+            max-height: 800px;
+        }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-900 to-blue-700 min-h-screen p-4">
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-white rounded-xl shadow-2xl overflow-hidden">
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-900 to-blue-700 px-8 py-6 text-white">
-                <div class="flex items-center gap-4 mb-3">
-                    <button onclick="window.location.href='/${encodeURIComponent(
-                      serverName
-                    )}?url=${encodeURIComponent(mcpUrl)}'"
-                            class="p-2 -ml-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+<body class="bg-gray-50 min-h-screen p-4">
+    <div class="max-w-3xl mx-auto py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <button onclick="window.location.href='/${encodeURIComponent(
+              serverName
+            )}?url=${encodeURIComponent(mcpUrl)}'"
+                    class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to installation
+            </button>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Add An Installation Guide to Your Docs</h1>
+            <p class="text-lg text-gray-600 mb-4">For <strong>${serverName}</strong> maintainers and contributors</p>
+            
+            <div class="inline-flex items-center gap-3 bg-white px-6 py-3 rounded-lg border border-gray-200 shadow-sm">
+                <span class="text-sm text-gray-600">Powered by</span>
+                <a href="https://github.com/janwilmake/install-this-mcp" 
+                   target="_blank"
+                   class="flex items-center gap-2 text-gray-900 hover:text-gray-700 transition-colors">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="font-semibold">install-this-mcp</span>
+                </a>
+                <a href="https://github.com/janwilmake/install-this-mcp" target="_blank">
+                    <img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" alt="GitHub stars">
+                </a>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Install Button Badge -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                         </svg>
-                    </button>
-                    <div>
-                        <h1 class="text-3xl font-bold">Installation Guides</h1>
-                        <p class="text-blue-100 mt-1">${serverName}</p>
                     </div>
+                    <div class="flex-1">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-1">Installation Badge</h2>
+                        <p class="text-sm text-gray-600">Add this badge to your README.md</p>
+                    </div>
+                </div>
+                
+                <div class="relative mb-3">
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded text-sm overflow-x-auto">${buttonMarkdown}</pre>
+                    <button onclick="copyCode(0, this)"
+                            class="absolute top-3 right-3 px-3 py-1.5 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors">
+                        Copy
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-center p-4 bg-gray-50 rounded">
+                    <img src="https://img.shields.io/badge/Install_MCP-${encodeURIComponent(
+                      serverName
+                    )}-1e3a8a?style=for-the-badge" alt="Install button">
                 </div>
             </div>
 
-            <div class="p-8 space-y-8">
-                <!-- Embed Widget -->
-                <section>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Embed on Your Website</h2>
-                    <p class="text-gray-600 mb-4">Copy and paste this HTML to embed the installation widget:</p>
-                    
-                    <div class="relative">
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">${iframeCode
+            <!-- Client Links -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-1">Direct Client Links</h2>
+                        <p class="text-sm text-gray-600">Link to specific installation instructions</p>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded text-sm overflow-x-auto">${permalinkMarkdown}</pre>
+                    <button onclick="copyCode(1, this)"
+                            class="absolute top-3 right-3 px-3 py-1.5 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors">
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Full Guide -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="text-lg font-semibold text-gray-900 mb-1">Complete Installation Guide</h2>
+                        <p class="text-sm text-gray-600">Full markdown guide for all clients (${
+                          fullGuide.split("\n").length
+                        } lines)</p>
+                    </div>
+                </div>
+                
+                <div class="relative">
+                    <pre class="bg-gray-900 text-gray-100 p-4 rounded text-sm max-h-96 overflow-x-auto">${fullGuide
+                      .replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")}</pre>
+                    <button onclick="copyCode(2, this)"
+                            class="absolute top-3 right-3 px-3 py-1.5 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors">
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- Embed Widget (Collapsible) -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex items-start gap-3 mb-4">
+                    <div class="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <button onclick="toggleEmbed()" class="w-full text-left">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-lg font-semibold text-gray-900 mb-1">Embed Widget on Website</h2>
+                                    <p class="text-sm text-gray-600">Interactive installation widget (click to expand)</p>
+                                </div>
+                                <svg id="embed-icon" class="w-5 h-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="embed-content" class="collapsible-content">
+                    <div class="relative mb-4">
+                        <pre class="bg-gray-900 text-gray-100 p-4 rounded text-sm overflow-x-auto">${iframeCode
                           .replace(/&/g, "&amp;")
                           .replace(/</g, "&lt;")
                           .replace(/>/g, "&gt;")
                           .replace(/"/g, "&quot;")}</pre>
-                        <button onclick="copyCode(0, this)"
-                                class="absolute top-4 right-4 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            Copy HTML
+                        <button onclick="copyCode(3, this)"
+                                class="absolute top-3 right-3 px-3 py-1.5 bg-gray-700 text-white text-xs rounded hover:bg-gray-600 transition-colors">
+                            Copy
                         </button>
                     </div>
 
-                    <!-- Preview -->
-                    <div class="mt-6">
+                    <div class="border-t border-gray-200 pt-4">
                         <p class="text-sm font-medium text-gray-700 mb-3">Preview:</p>
-                        <div class="flex justify-center bg-gradient-to-br from-blue-900 to-blue-700 p-8 rounded-lg">
+                        <div class="flex justify-center bg-gray-50 p-8 rounded border border-gray-200">
                             <iframe src="${baseUrl}&iframe=1" 
                                     width="480" 
                                     height="600" 
@@ -636,72 +867,25 @@ function generateGuidesPage(mcpUrl, serverName, configs) {
                                     title="Install ${serverName}"></iframe>
                         </div>
                     </div>
-                </section>
-
-                <!-- Install Button Badge -->
-                <section>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Install Button (Markdown)</h2>
-                    <p class="text-gray-600 mb-4">Add this to your README.md or documentation:</p>
-                    
-                    <div class="relative">
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">${buttonMarkdown}</pre>
-                        <button onclick="copyCode(1, this)"
-                                class="absolute top-4 right-4 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            Copy Markdown
-                        </button>
-                    </div>
-
-                    <div class="mt-4 text-center">
-                        <p class="text-sm text-gray-600 mb-2">Preview:</p>
-                        <img src="https://img.shields.io/badge/Install_MCP-${encodeURIComponent(
-                          serverName
-                        )}-1e3a8a?style=for-the-badge" alt="Install button">
-                    </div>
-                </section>
-
-                <!-- Client Permalinks -->
-                <section>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Client-Specific Links</h2>
-                    <p class="text-gray-600 mb-4">Direct links to installation instructions for each client:</p>
-                    
-                    <div class="relative">
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">${permalinkMarkdown}</pre>
-                        <button onclick="copyCode(2, this)"
-                                class="absolute top-4 right-4 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            Copy Links
-                        </button>
-                    </div>
-                </section>
-
-                <!-- Full Markdown Guide -->
-                <section>
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Full Installation Guide (Markdown)</h2>
-                    <p class="text-gray-600 mb-4">Complete installation instructions for all clients (${
-                      fullGuide.split("\n").length
-                    } lines):</p>
-                    
-                    <div class="relative">
-                        <pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm max-h-96">${fullGuide
-                          .replace(/&/g, "&amp;")
-                          .replace(/</g, "&lt;")
-                          .replace(/>/g, "&gt;")}</pre>
-                        <button onclick="copyCode(3, this)"
-                                class="absolute top-4 right-4 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
-                            Copy Guide
-                        </button>
-                    </div>
-                </section>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
         const copyableContent = [
-            ${JSON.stringify(iframeCode)},
             ${JSON.stringify(buttonMarkdown)},
             ${JSON.stringify(permalinkMarkdown)},
-            ${JSON.stringify(fullGuide)}
+            ${JSON.stringify(fullGuide)},
+            ${JSON.stringify(iframeCode)}
         ];
+
+        function toggleEmbed() {
+            const content = document.getElementById('embed-content');
+            const icon = document.getElementById('embed-icon');
+            content.classList.toggle('expanded');
+            icon.style.transform = content.classList.contains('expanded') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
 
         function copyCode(index, button) {
             const text = copyableContent[index];
@@ -737,13 +921,14 @@ function generateGuidesPage(mcpUrl, serverName, configs) {
             });
         }
     </script>
-    <!-- 100% privacy-first analytics -->
-<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
-
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>`;
 }
-
+/**
+ * Generates the landing page HTML
+ * @returns {string} HTML string
+ */
 function generateLandingPage() {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -755,23 +940,25 @@ function generateLandingPage() {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gradient-to-br from-blue-900 to-blue-700 font-sans min-h-screen flex items-center justify-center px-4">
+<body class="bg-gray-50 font-sans min-h-screen flex items-center justify-center px-4">
     <div class="max-w-md w-full">
         <div class="text-center flex flex-col justify-center items-center mb-8">
-            <div class="w-16 h-16 mx-auto mb-4 bg-white rounded-xl flex items-center justify-center shadow-lg">
-                <svg class="w-8 h-8 text-blue-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-16 h-16 mx-auto mb-4 bg-white border border-gray-200 rounded-lg flex items-center justify-center shadow-sm">
+                <svg class="w-8 h-8 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
             </div>
-            <h1 class="text-4xl font-bold text-white mb-2">Install This MCP</h1>
-            <p class="text-blue-100">Generate shareable installation guides for your MCP server <br></p>
+            <h1 class="text-3xl font-semibold text-gray-900 mb-2">Install This MCP</h1>
+            <p class="text-gray-600">Generate shareable installation guides for your MCP server</p>
 
-            <p class="text-center pt-4"><a href="https://github.com/janwilmake/install-this-mcp"><img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" 
-       alt="GitHub stars"></a></p>
-            
+            <p class="text-center pt-4">
+                <a href="https://github.com/janwilmake/install-this-mcp">
+                    <img src="https://img.shields.io/github/stars/janwilmake/install-this-mcp?style=social" alt="GitHub stars">
+                </a>
+            </p>
         </div>
         
-        <div class="bg-white rounded-xl shadow-2xl p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <form id="mcpForm" class="space-y-4">
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Server Name</label>
@@ -779,7 +966,7 @@ function generateLandingPage() {
                            id="name" 
                            name="name" 
                            placeholder="My Awesome MCP Server"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none transition-all"
+                           class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
                            required>
                 </div>
                 
@@ -789,12 +976,12 @@ function generateLandingPage() {
                            id="url" 
                            name="url" 
                            placeholder="https://api.example.com/mcp"
-                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent outline-none transition-all"
+                           class="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"
                            required>
                 </div>
                 
                 <button type="submit" 
-                        class="w-full bg-blue-900 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-800 transition-colors">
+                        class="w-full bg-gray-900 text-white py-3 px-4 rounded font-medium hover:bg-gray-700 transition-colors">
                     Generate Installation Guide
                 </button>
             </form>
@@ -818,14 +1005,19 @@ function generateLandingPage() {
             }
         });
     </script>
-   <!-- 100% privacy-first analytics -->
-<script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
- 
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
 </body>
 </html>`;
 }
 
 export default {
+  /**
+   * Handles incoming requests
+   * @param {Request} request - Incoming request
+   * @param {Object} env - Environment variables
+   * @param {Object} ctx - Execution context
+   * @returns {Promise<Response>} Response
+   */
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
@@ -847,6 +1039,9 @@ export default {
 
     if (pathParts.length > 0 && mcpUrl) {
       const serverName = decodeURIComponent(pathParts[0]);
+
+      // Fetch metadata from MCP server
+      const metadata = await fetchMCPMetadata(mcpUrl);
 
       // Handle guides page: /{name}/guides
       if (pathParts.length === 2 && pathParts[1] === "guides") {
@@ -877,7 +1072,13 @@ export default {
 
       try {
         const configs = generateMCPConfig(mcpUrl, serverName);
-        const html = generateHTML(mcpUrl, serverName, configs, selectedClient);
+        const html = generateHTML(
+          mcpUrl,
+          serverName,
+          configs,
+          selectedClient,
+          metadata
+        );
 
         return new Response(html, {
           headers: {
