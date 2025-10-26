@@ -1038,10 +1038,10 @@ export default {
     const mcpUrl = url.searchParams.get("url");
 
     if (pathParts.length > 0 && mcpUrl) {
-      const serverName = decodeURIComponent(pathParts[0]);
-
       // Fetch metadata from MCP server
       const metadata = await fetchMCPMetadata(mcpUrl);
+      const serverName =
+        metadata?.serverInfo?.title || decodeURIComponent(pathParts[0]);
 
       // Handle guides page: /{name}/guides
       if (pathParts.length === 2 && pathParts[1] === "guides") {
