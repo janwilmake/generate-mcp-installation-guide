@@ -7,17 +7,20 @@ const { generateMCPConfig, generateMCPInstallationGuide } = require("./index");
  */
 
 /**
+ * TODO: align this with whatever comes out of https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649
+ *
  * Fetches MCP server metadata via GET request with application/json accept header
  * @param {string} mcpUrl - MCP server URL
  * @returns {Promise<InitializeResult | null>} Server metadata or null if unavailable
  */
 async function fetchMCPMetadata(mcpUrl) {
+  const segments = mcpUrl.split("/");
+  segments.pop();
+  const wellKnownUrl = segments.join("/") + ".well-known/mcp";
   try {
-    const response = await fetch(mcpUrl, {
+    const response = await fetch(wellKnownUrl, {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: { Accept: "application/json" },
     });
 
     if (!response.ok) {
@@ -26,7 +29,9 @@ async function fetchMCPMetadata(mcpUrl) {
 
     /** @type {InitializeResult} */
     const data = await response.json();
-    return data;
+    return Array.isArray(data)
+      ? data.find((x) => x.url === mcpUrl) || data[0]
+      : data;
   } catch (error) {
     console.error("Failed to fetch MCP metadata:", error);
     return null;
