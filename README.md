@@ -70,3 +70,7 @@ No, also this is out of scope, and we are working towards a world where every cl
 **Can you add LLM client XYZ?**
 
 We favor clients with wide adoption, but less popular clients are also welcome if they have one-click-install deeplink support and support oauth. To add a client, please open a PR altering [index.js](index.js).
+
+# TODO
+
+- align this with server-cards spec that comes out of https://github.com/modelcontextprotocol/modelcontextprotocol/issues/1649
